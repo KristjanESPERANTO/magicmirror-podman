@@ -1,0 +1,26 @@
+# Start the Wayland Electron display only while the graphical user session is active.
+[Unit]
+Description=MagicMirror Electron (Wayland, develop)
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Container]
+Image=localhost/magicmirror-podman:develop-electron
+ContainerName=magicmirror-electron
+Pull=never
+RunInit=true
+UserNS=keep-id:uid=1000,gid=1000
+Environment=MM_MODE=electron
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WAYLAND_DISPLAY=wayland-0
+Volume=%t/wayland-0:/run/user/1000/wayland-0:ro
+Volume=%h/.config/magicmirror-podman:/opt/magicmirror/config:Z
+
+[Service]
+ExecStartPre=/usr/bin/test -S %t/wayland-0
+ExecStartPre=/usr/bin/mkdir -p %h/.config/magicmirror-podman
+SuccessExitStatus=143
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target

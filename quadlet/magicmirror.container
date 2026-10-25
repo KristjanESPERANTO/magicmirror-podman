@@ -1,0 +1,27 @@
+# Podman turns this Quadlet definition into a systemd user service.
+[Unit]
+Description=MagicMirror server (develop)
+
+[Container]
+# Use the image built locally; don't try to pull a published image.
+Image=localhost/magicmirror-podman:develop
+ContainerName=magicmirror
+Pull=never
+# Forward stop signals to the process started by `node --run server`.
+RunInit=true
+# Map the container's node user to the invoking host user for writable config files.
+UserNS=keep-id:uid=1000,gid=1000
+# Keep the web interface local to this machine by default.
+PublishPort=127.0.0.1:8080:8080
+# Preserve settings outside the container and share them with run.sh.
+Volume=%h/.config/magicmirror-podman:/opt/magicmirror/config:Z
+
+[Service]
+# Quadlet mounts require the host directory to exist before Podman starts the container.
+ExecStartPre=/usr/bin/mkdir -p %h/.config/magicmirror-podman
+# Podman reports the expected SIGTERM shutdown from the container as exit status 143.
+SuccessExitStatus=143
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
